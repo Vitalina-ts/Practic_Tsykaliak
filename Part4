@@ -1,0 +1,227 @@
+worker.py
+from abc import ABC, abstractmethod
+
+
+class Worker(ABC):
+    def __init__(self, surname, manager_surname):
+        self.surname = surname
+        self.manager_surname = manager_surname
+        self.subordinates = []
+        self.duties = []
+
+    def add_subordinate(self, name):
+        self.subordinates.append(name)
+
+    def add_duty(self, duty):
+        self.duties.append(duty)
+
+    def get_surname(self):
+        return self.surname
+
+    def get_manager_surname(self):
+        return self.manager_surname
+
+    @abstractmethod
+    def show_duties(self):
+        pass
+
+    @abstractmethod
+    def show_subordinates(self):
+        pass
+
+    @abstractmethod
+    def get_role(self):
+        pass
+
+roles/manager.py
+
+from worker import Worker
+
+
+class Manager(Worker):
+    def show_duties(self):
+        print(f"Manager {self.surname} duties:")
+        for d in self.duties:
+            print(f" - {d}")
+
+    def show_subordinates(self):
+        print(f"Manager {self.surname}'s subordinates:")
+        for s in self.subordinates:
+            print(f" - {s}")
+
+    def get_role(self):
+        return "Manager"
+
+roles/developer.py
+
+from worker import Worker
+
+
+class Developer(Worker):
+    def show_duties(self):
+        print(f"Developer {self.surname} duties:")
+        for d in self.duties:
+            print(f" - {d}")
+
+    def show_subordinates(self):
+        print(f"Developer {self.surname} has no subordinates.")
+
+    def get_role(self):
+        return "Developer"
+
+roles/coder.py
+
+
+from worker import Worker
+
+
+class Coder(Worker):
+    def show_duties(self):
+        print(f"Coder {self.surname} duties:")
+        for d in self.duties:
+            print(f" - {d}")
+
+    def show_subordinates(self):
+        print(f"Coder {self.surname} has no subordinates.")
+
+    def get_role(self):
+        return "Coder"
+
+
+roles/__init__.py
+
+
+# Optional: allows you to import from roles as a module
+from .manager import Manager
+from .developer import Developer
+from .coder import Coder
+
+group.py
+
+import csv
+from roles import Manager, Developer, Coder
+
+
+class Group:
+    def __init__(self):
+        self.workers = []
+
+    def add_worker(self, worker):
+        self.workers.append(worker)
+
+    def show_all(self):
+        for w in self.workers:
+            print(f"\n--- {w.get_role()} {w.get_surname()} ---")
+            w.show_duties()
+            w.show_subordinates()
+
+    def find_by_surname(self, surname):
+        for w in self.workers:
+            if w.get_surname() == surname:
+                print(f"\nFound {w.get_role()}: {w.get_surname()}")
+                w.show_duties()
+                w.show_subordinates()
+                print("\nSubordinates tree:")
+                self._print_subtree(w.get_surname(), 1)
+                return
+        print("Worker not found.")
+
+    def _print_subtree(self, manager_surname, level):
+        for w in self.workers:
+            if w.get_manager_surname() == manager_surname:
+                print("  " * level + f"- {w.get_surname()} ({w.get_role()})")
+                self._print_subtree(w.get_surname(), level + 1)
+
+    def sort_by_surname(self):
+        self.workers.sort(key=lambda w: w.get_surname())
+
+    def save_to_file(self, filename):
+        with open(filename, "w", newline='', encoding='utf-8') as f:
+            writer = csv.writer(f)
+            for w in self.workers:
+                duties = "|".join(w.duties)
+                subs = "|".join(w.subordinates)
+                writer.writerow([
+                    w.get_role(),
+                    w.get_surname(),
+                    w.get_manager_surname(),
+                    duties,
+                    subs
+                ])
+
+    def load_from_file(self, filename):
+        self.workers.clear()
+        with open(filename, "r", encoding='utf-8') as f:
+            reader = csv.reader(f)
+            for row in reader:
+                if len(row) < 3:
+                    continue
+                role = row[0]
+                surname = row[1]
+                manager = row[2]
+                duties = row[3].split("|") if len(row) > 3 and row[3] else []
+                subs = row[4].split("|") if len(row) > 4 and row[4] else []
+
+                if role == "Manager":
+                    worker = Manager(surname, manager)
+                elif role == "Developer":
+                    worker = Developer(surname, manager)
+                elif role == "Coder":
+                    worker = Coder(surname, manager)
+                else:
+                    continue
+
+                for d in duties:
+                    worker.add_duty(d)
+                for s in subs:
+                    worker.add_subordinate(s)
+
+                self.add_worker(worker)
+
+
+
+main.py
+
+from roles import Manager, Developer, Coder
+from group import Group
+
+
+def main():
+    group = Group()
+
+    m1 = Manager("Ivanov", "-")
+    m1.add_duty("Manage project")
+    m1.add_subordinate("Petrenko")
+    m1.add_subordinate("Shevchenko")
+
+    d1 = Developer("Petrenko", "Ivanov")
+    d1.add_duty("Design architecture")
+
+    c1 = Coder("Shevchenko", "Ivanov")
+    c1.add_duty("Write unit tests")
+    c1.add_duty("Fix bugs")
+
+    group.add_worker(m1)
+    group.add_worker(d1)
+    group.add_worker(c1)
+
+    group.show_all()
+
+    print("\n=== Search by surname ===")
+    group.find_by_surname("Ivanov")
+
+    print("\n=== Sorted ===")
+    group.sort_by_surname()
+    group.show_all()
+
+    group.save_to_file("workers.csv")
+    print("\nData saved to 'workers.csv'")
+
+    print("\n=== Loaded from file ===")
+    new_group = Group()
+    new_group.load_from_file("workers.csv")
+    new_group.show_all()
+
+
+if __name__ == "__main__":
+    main()
