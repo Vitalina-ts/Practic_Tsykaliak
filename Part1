@@ -1,0 +1,93 @@
+import tkinter as tk
+from tkinter import ttk, Menu
+from tkinter import messagebox
+from math import cos, sin, pi
+
+# Клас для логіки побудови квітки життя
+class FlowerOfLife:
+    def __init__(self, canvas, center_x, center_y, radius, circle_count):
+        self.canvas = canvas
+        self.center_x = center_x
+        self.center_y = center_y
+        self.radius = radius
+        self.circle_count = circle_count
+
+    def draw_circle(self, x, y, r):
+        self.canvas.create_oval(x - r, y - r, x + r, y + r, outline="black")
+
+    def draw(self):
+        self.canvas.delete("all")  # Очищення полотна
+        points = []
+
+        # Побудова основних кіл
+        for i in range(self.circle_count):
+            angle = 2 * pi * i / self.circle_count
+            x = self.center_x + self.radius * cos(angle)
+            y = self.center_y + self.radius * sin(angle)
+            self.draw_circle(x, y, self.radius)
+            points.append((x, y))
+
+        # Побудова кіл у місцях перетину
+        for (x1, y1) in points:
+            for (x2, y2) in points:
+                if (x1, y1) != (x2, y2):
+                    dist = ((x1 - x2)**2 + (y1 - y2)**2)**0.5
+                    if dist <= 2 * self.radius:
+                        self.draw_circle(x2, y2, self.radius)
+
+# Клас для графічного інтерфейсу
+class FlowerOfLifeApp(tk.Tk):
+    def __init__(self):
+        super().__init__()
+        self.title("Flower of Life Drawer")
+        self.geometry("700x700")
+
+        self.circle_count = tk.IntVar(value=7)
+        self.radius = tk.IntVar(value=50)
+
+        self.create_menu()
+        self.create_widgets()
+        self.create_canvas()
+
+    def create_menu(self):
+        menu_bar = Menu(self)
+
+        file_menu = Menu(menu_bar, tearoff=0)
+        file_menu.add_command(label="Вихід", command=self.quit)
+        menu_bar.add_cascade(label="Файл", menu=file_menu)
+
+        help_menu = Menu(menu_bar, tearoff=0)
+        help_menu.add_command(label="Про програму", command=lambda: messagebox.showinfo("Інфо", "Ведіть кількість кіл та радіус кіл, щоб з'явився малюнок."))
+        menu_bar.add_cascade(label="Довідка", menu=help_menu)
+
+        self.config(menu=menu_bar)
+
+    def create_widgets(self):
+        controls = ttk.Frame(self)
+        controls.pack(pady=10)
+
+        ttk.Label(controls, text="Кількість кіл:").grid(row=0, column=0, padx=5, sticky="w")
+        ttk.Entry(controls, textvariable=self.circle_count, width=10).grid(row=0, column=1, padx=5)
+
+        ttk.Label(controls, text="Радіус:").grid(row=1, column=0, padx=5, sticky="w")
+        ttk.Entry(controls, textvariable=self.radius, width=10).grid(row=1, column=1, padx=5)
+
+        ttk.Button(controls, text="Побудувати", command=self.draw_figure).grid(row=2, column=0, columnspan=2, pady=10)
+
+    def create_canvas(self):
+        self.canvas = tk.Canvas(self, width=600, height=600, bg="white")
+        self.canvas.pack(pady=10)
+
+    def draw_figure(self):
+        center_x = 300
+        center_y = 300
+        radius = self.radius.get()
+        count = self.circle_count.get()
+
+        flower = FlowerOfLife(self.canvas, center_x, center_y, radius, count)
+        flower.draw()
+
+# Запуск програми
+if __name__ == "__main__":
+    app = FlowerOfLifeApp()
+    app.mainloop()
