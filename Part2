@@ -1,0 +1,54 @@
+import matplotlib.pyplot as plt
+import numpy as np
+
+def draw_decorated_triangle(ax, x_start, width, height):
+    # Координати великого трикутника
+    top = (x_start + width / 2, height)
+    left = (x_start, 0)
+    right = (x_start + width, 0)
+
+    # Координати малого внутрішнього трикутника
+    margin = 0.2
+    small_left = (x_start + width * margin, 0)
+    small_right = (x_start + width * (1 - margin), 0)
+    small_top = (x_start + width / 2, height * (1 - margin))
+
+    # Малюємо контур великого трикутника
+    ax.plot([left[0], top[0], right[0], left[0]],
+            [left[1], top[1], right[1], left[1]], color='black', linewidth=2)
+
+    # Малюємо контур малого трикутника
+    ax.plot([small_left[0], small_top[0], small_right[0], small_left[0]],
+            [small_left[1], small_top[1], small_right[1], small_left[1]], color='black', linewidth=1)
+
+    # Малюємо вертикальні лінії всередині великого трикутника з більшою щільністю
+    x_vals = np.linspace(left[0], right[0], 20)  # Збільшено до 20 ліній
+    for x in x_vals:
+        y_top = height - abs((x - (x_start + width / 2)) * height / (width / 2))
+        y_bottom = 0
+        if small_left[0] <= x <= small_right[0]:
+            y_bottom = height * (1 - margin) - abs((x - (x_start + width / 2)) *
+                                                  (height * (1 - margin)) / (width / 2 * (1 - 2 * margin)))
+        if y_bottom < y_top:
+            ax.plot([x, x], [y_bottom, y_top], color='black', linewidth=0.5)
+
+# Побудова всієї фігури
+fig, ax = plt.subplots(figsize=(10, 3))
+ax.set_aspect('equal')
+ax.axis('off')
+
+# Малюємо 4 трикутники
+triangle_width = 2.0
+for i in range(4):
+    draw_decorated_triangle(ax, x_start=i * triangle_width, width=triangle_width, height=2.0)
+
+# Малюємо рамку навколо всього
+frame_left = 0
+frame_right = 4 * triangle_width
+frame_top = 2.0
+frame_bottom = 0
+ax.plot([frame_left, frame_right, frame_right, frame_left, frame_left],
+        [frame_bottom, frame_bottom, frame_top, frame_top, frame_bottom],
+        color='black', linewidth=2)
+
+plt.show()
