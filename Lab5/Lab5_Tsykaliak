@@ -1,0 +1,36 @@
+import numpy as np
+import pandas as pd
+
+data = {
+    "x1": [6.0, 6.2, 5.5, 5.4, 5.0],
+    "x2": [7.5, 7.1, 7.0, 6.8, 6.0],
+    "x3": [7.4, 7.3, 7.0, 7.7, 7.0],
+    "x4": [7.0, 5.8, 6.0, 6.2, 6.4]
+}
+
+df = pd.DataFrame(data, index=["θ1", "θ2", "θ3", "θ4", "θ5"])
+p = np.array([0.1, 0.3, 0.4, 0.15, 0.05])
+
+expected_values = {}
+for option in df.columns:
+    values = np.array(df[option])
+    expected_values[option] = np.sum(values * p)
+best_bayes = max(expected_values, key=expected_values.get)
+
+max_by_state = df.max(axis=1).values
+losses = {}
+for option in df.columns:
+    current = np.array(df[option])
+    loss = max_by_state - current
+    losses[option] = np.sum(loss * p)
+best_min_loss = min(losses, key=losses.get)
+
+print("=== Критерій Байєса ===")
+for k, v in expected_values.items():
+    print(f"{k}: {v:.4f}")
+print(f"Оптимальний варіант (Байєс): {best_bayes}")
+
+print("\n=== Критерій мінімальних несприятливих відхилень ===")
+for k, v in losses.items():
+    print(f"{k}: {v:.4f}")
+print(f"Оптимальний варіант (мінімальні втрати): {best_min_loss}")
