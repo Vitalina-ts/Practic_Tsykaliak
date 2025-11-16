@@ -1,0 +1,44 @@
+import numpy as np
+import pandas as pd
+
+F = np.array([
+    [8, 2, 4],
+    [6, 7, 4],
+    [4, 3, 5],
+    [3, 5, 6]
+])
+
+p = np.array([1/2, 1/3, 1/6])
+
+df = pd.DataFrame(F, index=["x1", "x2", "x3", "x4"], columns=["θ1", "θ2", "θ3"])
+
+bayes = {}
+dispersion = {}
+compromise = {}
+
+for option in df.index:
+    values = df.loc[option].values
+    M = np.sum(values * p)
+    D = np.sum(p * (values - M) ** 2)
+    bayes[option] = M
+    dispersion[option] = D
+    compromise[option] = M - D
+
+best_bayes = max(bayes, key=bayes.get)
+best_dispersion = min(dispersion, key=dispersion.get)
+best_compromise = max(compromise, key=compromise.get)
+
+print("=== Критерій Байєса ===")
+for k, v in bayes.items():
+    print(f"{k}: {v:.4f}")
+print(f"Оптимальне рішення: {best_bayes}")
+
+print("\n=== Дисперсійний критерій ===")
+for k, v in dispersion.items():
+    print(f"{k}: {v:.4f}")
+print(f"Найменша дисперсія: {best_dispersion}")
+
+print("\n=== Компромісне рішення (M - D) ===")
+for k, v in compromise.items():
+    print(f"{k}: {v:.4f}")
+print(f"Оптимальне компромісне рішення: {best_compromise}")
